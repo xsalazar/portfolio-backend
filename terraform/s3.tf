@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "instance" {
-  bucket = "portfolio-data"
+  bucket = "xsalazar-portfolio-data"
 }
 
 resource "aws_s3_bucket_notification" "instance" {

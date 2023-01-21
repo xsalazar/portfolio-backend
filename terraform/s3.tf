@@ -26,5 +26,17 @@ data "aws_iam_policy_document" "s3_bucket_policy_document" {
     actions = ["lambda:InvokeFunction"]
 
     resources = [aws_lambda_function.instance.arn]
+
+    condition {
+      test     = "ArnEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_s3_bucket.instance.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceAccount"
+      values   = ["368081326042"]
+    }
   }
 }

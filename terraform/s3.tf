@@ -10,3 +10,21 @@ resource "aws_s3_bucket_notification" "instance" {
     lambda_function_arn = aws_lambda_function.instance.arn
   }
 }
+
+resource "aws_s3_bucket_policy" "s3_bucket_policy" {
+  bucket = aws_s3_bucket.instance.id
+  policy = data.aws_iam_policy_document.s3_bucket_policy_document.json
+}
+
+data "aws_iam_policy_document" "s3_bucket_policy_document" {
+  statement {
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+
+    actions = ["lambda:InvokeFunction"]
+
+    resources = [aws_lambda_function.instance.arn]
+  }
+}

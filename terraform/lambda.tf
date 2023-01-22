@@ -1,3 +1,7 @@
+variable "portfolio_api_key" {
+  type = string
+}
+
 resource "aws_lambda_function" "instance" {
   function_name = "portfolio"
   filename      = "${path.module}/dummy-lambda-package/lambda.zip" // Simple hello world application
@@ -6,6 +10,12 @@ resource "aws_lambda_function" "instance" {
   runtime       = "nodejs16.x"
   timeout       = 30  // seconds
   memory_size   = 128 // MB
+
+  environment {
+    variables = {
+      PORTFOLIO_API_KEY = var.portfolio_api_key
+    }
+  }
 
   // Since CI/CD will deploy this application externally, these do not need to be tracked after creation
   lifecycle {

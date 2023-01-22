@@ -32,10 +32,10 @@ jobs:
 
       - name: Terraform Init ✨
         id: init
-        run: terraform init -upgrade
+        run: terraform init -upgrade -var 'portfolio_api_key=${{ secrets.PORTFOLIO_API_KEY }}'
         working-directory: ./terraform
 
       - name: Terraform Apply 🚀
         id: apply
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -var 'portfolio_api_key=${{ secrets.PORTFOLIO_API_KEY }}'
         working-directory: ./terraform

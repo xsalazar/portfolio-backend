@@ -57,7 +57,7 @@ exports.handler = async (event, context) => {
     event.requestContext.http.method === "GET"
   ) {
     const image = event.queryStringParameters.image;
-    const thumbnail = event.queryStringParameters.thumbnail === true;
+    const thumbnail = event.queryStringParameters.thumbnail;
     const s3 = new AWS.S3();
 
     // Check S3 for image, return it, if found

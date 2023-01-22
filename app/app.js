@@ -76,10 +76,11 @@ exports.handler = async (event, context) => {
           isBase64Encoded: true,
           statusCode: 200,
           headers: { "content-type": data.ContentType },
-          body: sharp(data.Body)
-            .resize({ height: 165, width: 165 })
-            .toBuffer()
-            .toString("base64"),
+          body: (
+            await sharp(data.Body)
+              .resize({ height: 165, width: 165 })
+              .toBuffer()
+          ).toString("base64"),
         };
       }
 

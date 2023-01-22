@@ -10,7 +10,8 @@ exports.handler = async (event, context) => {
   if (
     event.queryStringParameters &&
     event.queryStringParameters.token &&
-    event.queryStringParameters.token === process.env.PORTFOLIO_API_KEY
+    event.queryStringParameters.token === process.env.PORTFOLIO_API_KEY &&
+    event.requestContext.http.method === "PUT"
   ) {
     const s3 = new AWS.S3();
     const path = uuidv4();
@@ -50,7 +51,11 @@ exports.handler = async (event, context) => {
   }
 
   // Get image from S3
-  if (event.queryStringParameters && event.queryStringParameters.image) {
+  if (
+    event.queryStringParameters &&
+    event.queryStringParameters.image &&
+    event.requestContext.http.method === "GET"
+  ) {
     const image = event.queryStringParameters.image;
     const thumbnail = event.queryStringParameters.thumbnail === true;
     const s3 = new AWS.S3();

@@ -32,40 +32,28 @@ jobs:
 
       - name: Terraform Init ✨
         id: init
-        run: terraform init -upgrade
+        run: terraform init -upgrade -var 'portfolio_api_key=${{ secrets.PORTFOLIO_API_KEY }}'
         working-directory: ./terraform
 
       - name: Save Lambda function name to Environment Variables 💾
         run: echo "LAMBDA_FUNCTION_NAME=$(terraform output -raw lambda_function)" >> $GITHUB_ENV
         working-directory: ./terraform
 
-      - name: Save ECR name to Environment Variables 🛟
-        run: echo "ECR_NAME=$(terraform output -raw ecr_repository_name)" >> $GITHUB_ENV
-        working-directory: ./terraform
-
       - name: Setup Node 🏗
         uses: actions/setup-node@v3
         with:
-          node-version: "18"
+          node-version: "16"
 
-      - name: Login to Amazon ECR 🧑‍💻
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+      - name: Install packages 📀
+        run: npm ci
+        working-directory: ./app
 
-      - name: Build, tag, and push image to Amazon ECR 🏷
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ env.ECR_NAME }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+      - name: Create Deployment Package 🎁
+        run: zip -r lambda.zip .
         working-directory: ./app
 
       - name: Deploy Lambda Function 🚀
         env:
           LAMBDA_FUNCTION_NAME: ${{ env.LAMBDA_FUNCTION_NAME }}
-        run: aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $IMAGE_URI
+        run: aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --zip-file fileb://lambda.zip
         working-directory: ./app

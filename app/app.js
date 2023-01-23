@@ -141,7 +141,11 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({
           images: data.Contents.sort((a, b) =>
             a.LastModified > b.LastModified ? -1 : 1
-          ).map((x) => x.Key),
+          )
+            .map((x) => x.Key)
+            .filter(
+              (x) => !(x.includes("-original") || x.includes("-thumbnail"))
+            ),
         }),
       };
     } catch (e) {

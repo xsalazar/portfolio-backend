@@ -97,8 +97,8 @@ exports.handler = async (event, context) => {
       // If call above doesn't fail, get data
       const data = await s3
         .getObject({
-          Bucket: `${bucketName}${thumbnail ? "-thumbnail" : ""}`,
-          Key: image,
+          Bucket: bucketName,
+          Key: `${image}${thumbnail ? "-thumbnail" : ""}`,
         })
         .promise();
 

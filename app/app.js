@@ -21,8 +21,37 @@ exports.handler = async (event, context) => {
       await s3
         .putObject({
           Bucket: bucketName,
-          Key: path,
+          Key: `${path}-original`,
           Body: Buffer.from(event.body, "base64"),
+          ContentType: event.headers["content-type"],
+        })
+        .promise();
+
+      // Upload downscaled image to S3
+      await s3
+        .putObject({
+          Bucket: bucketName,
+          Key: `${path}`,
+          Body: await sharp(Buffer.from(event.body, "base64"))
+            .resize({
+              width: 1600,
+            })
+            .toBuffer(),
+          ContentType: event.headers["content-type"],
+        })
+        .promise();
+
+      // Upload thumbnail image to S3
+      await s3
+        .putObject({
+          Bucket: bucketName,
+          Key: `${path}-thumbnail`,
+          Body: await sharp(Buffer.from(event.body, "base64"))
+            .resize({
+              width: 165,
+              height: 165,
+            })
+            .toBuffer(),
           ContentType: event.headers["content-type"],
         })
         .promise();
@@ -67,22 +96,11 @@ exports.handler = async (event, context) => {
 
       // If call above doesn't fail, get data
       const data = await s3
-        .getObject({ Bucket: bucketName, Key: image })
+        .getObject({
+          Bucket: `${bucketName}${thumbnail ? "-thumbnail" : ""}`,
+          Key: image,
+        })
         .promise();
-
-      if (thumbnail) {
-        return {
-          cookies: [],
-          isBase64Encoded: true,
-          statusCode: 200,
-          headers: { "content-type": data.ContentType },
-          body: (
-            await sharp(data.Body)
-              .resize({ height: 165, width: 165 })
-              .toBuffer()
-          ).toString("base64"),
-        };
-      }
 
       return {
         cookies: [],

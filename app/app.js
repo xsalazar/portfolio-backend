@@ -6,7 +6,7 @@ exports.handler = async (event, context) => {
   console.log(JSON.stringify(event));
   const bucketName = "xsalazar-portfolio-data";
 
-  // Upload images from API with valid token
+  // Upload images through API with valid token
   if (
     event.queryStringParameters &&
     event.queryStringParameters.token &&
@@ -79,7 +79,7 @@ exports.handler = async (event, context) => {
     }
   }
 
-  // Get image from S3
+  // Get singular image from S3
   if (
     event.queryStringParameters &&
     event.queryStringParameters.image &&
@@ -116,6 +116,41 @@ exports.handler = async (event, context) => {
         cookies: [],
         isBase64Encoded: false,
         statusCode: 404,
+        headers: {},
+        body: "",
+      };
+    }
+  }
+
+  // Get all images
+  if (
+    event.queryStringParameters &&
+    event.queryStringParameters.allImages &&
+    event.requestContext.http.method === "GET"
+  ) {
+    const s3 = new AWS.S3();
+
+    try {
+      const data = await s3.listObjectsV2({ Bucket: bucketName }).promise();
+
+      return {
+        cookies: [],
+        isBase64Encoded: false,
+        statusCode: 200,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          images: data.Contents.sort((a, b) =>
+            a.LastModified > b.LastModified ? -1 : 1
+          ).map((x) => x.Key),
+        }),
+      };
+    } catch (e) {
+      console.log(JSON.stringify(e));
+
+      return {
+        cookies: [],
+        isBase64Encoded: false,
+        statusCode: 500,
         headers: {},
         body: "",
       };

@@ -144,7 +144,7 @@ exports.handler = async (event, context) => {
         isBase64Encoded: false,
         statusCode: 200,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(data.Body.toString()),
+        body: JSON.parse(data.Body.toString()),
       };
     } catch (e) {
       const images = await s3.listObjectsV2({ Bucket: bucketName }).promise();

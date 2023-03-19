@@ -131,25 +131,40 @@ exports.handler = async (event, context) => {
     const s3 = new AWS.S3();
 
     try {
-      const data = await s3.listObjectsV2({ Bucket: bucketName }).promise();
+      // Check if data exists
+      await s3.headObject({ Bucket: bucketName, Key: "data.json" }).promise();
+
+      // If call above doesn't fail, get data
+      const data = await s3
+        .getObject({ Bucket: bucketName, Key: "data.json" })
+        .promise();
 
       return {
         cookies: [],
         isBase64Encoded: false,
         statusCode: 200,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          images: data.Contents.sort((a, b) =>
-            a.LastModified > b.LastModified ? -1 : 1
-          )
-            .map((x) => x.Key)
-            .filter(
-              (x) => !(x.includes("-original") || x.includes("-thumbnail"))
-            ),
-        }),
+        body: JSON.stringify(data.Body.toString()),
       };
     } catch (e) {
-      console.log(JSON.stringify(e));
+      const data = await s3.listObjectsV2({ Bucket: bucketName }).promise();
+
+      const images = data.Contents.sort((a, b) =>
+        a.LastModified > b.LastModified ? -1 : 1
+      )
+        .map((x) => x.Key)
+        .filter((x) => !(x.includes("-original") || x.includes("-thumbnail")))
+        .map((x, index) => {
+          return { id: x, order: index };
+        });
+
+      await s3
+        .putObject({
+          Bucket: bucketName,
+          Key: "data.json",
+          Body: JSON.stringify(images),
+        })
+        .promise();
 
       return {
         cookies: [],

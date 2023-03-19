@@ -144,7 +144,7 @@ exports.handler = async (event, context) => {
         isBase64Encoded: false,
         statusCode: 200,
         headers: { "content-type": "application/json" },
-        body: JSON.parse(data.Body.toString()),
+        body: JSON.stringify(JSON.parse(data.Body.toString())),
       };
     } catch (e) {
       console.log(JSON.stringify(e));

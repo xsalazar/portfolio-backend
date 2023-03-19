@@ -147,6 +147,8 @@ exports.handler = async (event, context) => {
         body: data.Body,
       };
     } catch (e) {
+      console.log(JSON.stringify(e));
+
       const images = await s3.listObjectsV2({ Bucket: bucketName }).promise();
 
       const imageData = images.Contents.sort((a, b) =>

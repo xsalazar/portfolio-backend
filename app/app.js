@@ -149,7 +149,7 @@ exports.handler = async (event, context) => {
     } catch (e) {
       const images = await s3.listObjectsV2({ Bucket: bucketName }).promise();
 
-      const imageData = data.Contents.sort((a, b) =>
+      const imageData = images.Contents.sort((a, b) =>
         a.LastModified > b.LastModified ? -1 : 1
       )
         .map((x) => x.Key)

@@ -165,6 +165,7 @@ exports.handler = async (event, context) => {
           Bucket: bucketName,
           Key: "data.json",
           Body: JSON.stringify({ data: imageData }),
+          ContentType: "application/json",
         })
         .promise();
 

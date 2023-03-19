@@ -147,9 +147,9 @@ exports.handler = async (event, context) => {
         body: JSON.stringify(data.Body.toString()),
       };
     } catch (e) {
-      const data = await s3.listObjectsV2({ Bucket: bucketName }).promise();
+      const images = await s3.listObjectsV2({ Bucket: bucketName }).promise();
 
-      const images = data.Contents.sort((a, b) =>
+      const imageData = data.Contents.sort((a, b) =>
         a.LastModified > b.LastModified ? -1 : 1
       )
         .map((x) => x.Key)
@@ -162,7 +162,7 @@ exports.handler = async (event, context) => {
         .putObject({
           Bucket: bucketName,
           Key: "data.json",
-          Body: JSON.stringify(images),
+          Body: JSON.stringify({ data: imageData }),
         })
         .promise();
 

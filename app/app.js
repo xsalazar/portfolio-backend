@@ -35,7 +35,7 @@ exports.handler = async (event, context) => {
         body: event.body,
       };
     } catch (e) {
-      console.log(JSON.stringify(e), ["message", "arguments", "type", "name"]);
+      console.log(JSON.stringify(e, ["name", "message", "stack"]));
 
       return {
         cookies: [],
@@ -108,7 +108,7 @@ exports.handler = async (event, context) => {
         body: JSON.stringify(result),
       };
     } catch (e) {
-      console.log(JSON.stringify(e), ["message", "arguments", "type", "name"]);
+      console.log(JSON.stringify(e, ["name", "message", "stack"]));
 
       return {
         cookies: [],
@@ -151,7 +151,7 @@ exports.handler = async (event, context) => {
         body: data.Body.toString("base64"),
       };
     } catch (e) {
-      console.log(JSON.stringify(e));
+      console.log(JSON.stringify(e, ["name", "message", "stack"]));
 
       return {
         cookies: [],
@@ -188,7 +188,7 @@ exports.handler = async (event, context) => {
         body: JSON.stringify(JSON.parse(data.Body.toString())),
       };
     } catch (e) {
-      console.log(JSON.stringify(e), ["message", "arguments", "type", "name"]);
+      console.log(JSON.stringify(e, ["name", "message", "stack"]));
 
       return {
         cookies: [],

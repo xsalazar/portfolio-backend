@@ -6,6 +6,47 @@ exports.handler = async (event, context) => {
   console.log(JSON.stringify(event));
   const bucketName = "xsalazar-portfolio-data";
 
+  // Update image data through API with valid token and query param
+  if (
+    event.queryStringParameters &&
+    event.queryStringParameters.token &&
+    event.queryStringParameters.token === process.env.PORTFOLIO_API_KEY &&
+    event.queryStringParameters.updateImageData &&
+    event.requestContext.http.method === "PATCH"
+  ) {
+    const s3 = new AWS.S3();
+
+    try {
+      await s3
+        .putObject({
+          Bucket: bucketName,
+          Key: "data.json",
+          Body: event.body,
+          ContentType: "application/json",
+        })
+        .promise();
+
+      // Return updated image data
+      return {
+        cookies: [],
+        isBase64Encoded: false,
+        statusCode: 200,
+        headers: { "content-type": "application/json" },
+        body: event.body,
+      };
+    } catch (e) {
+      console.log(JSON.stringify(e), ["message", "arguments", "type", "name"]);
+
+      return {
+        cookies: [],
+        isBase64Encoded: false,
+        statusCode: 500,
+        headers: {},
+        body: "",
+      };
+    }
+  }
+
   // Upload images through API with valid token
   if (
     event.queryStringParameters &&
@@ -58,7 +99,7 @@ exports.handler = async (event, context) => {
 
       const result = await insertImageId(bucketName, imageId);
 
-      // Return URL to image
+      // Return updated image data
       return {
         cookies: [],
         isBase64Encoded: false,
@@ -67,7 +108,7 @@ exports.handler = async (event, context) => {
         body: JSON.stringify(result),
       };
     } catch (e) {
-      console.log(JSON.stringify(e));
+      console.log(JSON.stringify(e), ["message", "arguments", "type", "name"]);
 
       return {
         cookies: [],
@@ -147,7 +188,7 @@ exports.handler = async (event, context) => {
         body: JSON.stringify(JSON.parse(data.Body.toString())),
       };
     } catch (e) {
-      console.log(JSON.stringify(e));
+      console.log(JSON.stringify(e), ["message", "arguments", "type", "name"]);
 
       return {
         cookies: [],

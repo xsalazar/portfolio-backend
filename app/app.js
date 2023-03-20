@@ -161,6 +161,8 @@ exports.handler = async (event, context) => {
 };
 
 async function insertImageId(bucketName, imageId) {
+  const s3 = new AWS.S3();
+
   let data = await s3
     .getObject({ Bucket: bucketName, Key: "data.json" })
     .promise();

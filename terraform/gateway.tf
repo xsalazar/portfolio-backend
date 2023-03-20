@@ -5,7 +5,7 @@ resource "aws_apigatewayv2_api" "instance" {
 
   cors_configuration {
     allow_origins = ["https://portfolio.xsalazar.com"]
-    allow_methods = ["GET", "PUT"]
+    allow_methods = ["GET", "PATCH", "PUT"]
     allow_headers = ["*"]
   }
 }

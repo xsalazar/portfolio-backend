@@ -56,7 +56,7 @@ exports.handler = async (event, context) => {
         })
         .promise();
 
-      const result = insertImageId(bucketName, imageId);
+      const result = await insertImageId(bucketName, imageId);
 
       // Return URL to image
       return {

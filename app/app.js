@@ -14,14 +14,14 @@ exports.handler = async (event, context) => {
     event.requestContext.http.method === "PUT"
   ) {
     const s3 = new AWS.S3();
-    const path = uuidv4();
+    const imageId = uuidv4();
 
     try {
       // Upload image to S3
       await s3
         .putObject({
           Bucket: bucketName,
-          Key: `${path}-original`,
+          Key: `${imageId}-original`,
           Body: Buffer.from(event.body, "base64"),
           ContentType: event.headers["content-type"],
         })
@@ -31,7 +31,7 @@ exports.handler = async (event, context) => {
       await s3
         .putObject({
           Bucket: bucketName,
-          Key: `${path}`,
+          Key: `${imageId}`,
           Body: await sharp(Buffer.from(event.body, "base64"))
             .resize({
               width: 1600,
@@ -45,16 +45,18 @@ exports.handler = async (event, context) => {
       await s3
         .putObject({
           Bucket: bucketName,
-          Key: `${path}-thumbnail`,
+          Key: `${imageId}-thumbnail`,
           Body: await sharp(Buffer.from(event.body, "base64"))
             .resize({
-              width: 165,
-              height: 165,
+              width: 256,
+              height: 256,
             })
             .toBuffer(),
           ContentType: event.headers["content-type"],
         })
         .promise();
+
+      insertImageId(bucketName, imageId);
 
       // Return URL to image
       return {
@@ -63,7 +65,7 @@ exports.handler = async (event, context) => {
         statusCode: 200,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          url: `https://backend.xsalazar.com/?image=${path}`,
+          url: `https://backend.xsalazar.com/?image=${imageId}`,
         }),
       };
     } catch (e) {
@@ -149,26 +151,6 @@ exports.handler = async (event, context) => {
     } catch (e) {
       console.log(JSON.stringify(e));
 
-      const images = await s3.listObjectsV2({ Bucket: bucketName }).promise();
-
-      const imageData = images.Contents.sort((a, b) =>
-        a.LastModified > b.LastModified ? -1 : 1
-      )
-        .map((x) => x.Key)
-        .filter((x) => !(x.includes("-original") || x.includes("-thumbnail")))
-        .map((x, index) => {
-          return { id: x, order: index };
-        });
-
-      await s3
-        .putObject({
-          Bucket: bucketName,
-          Key: "data.json",
-          Body: JSON.stringify({ data: imageData }),
-          ContentType: "application/json",
-        })
-        .promise();
-
       return {
         cookies: [],
         isBase64Encoded: false,
@@ -179,3 +161,49 @@ exports.handler = async (event, context) => {
     }
   }
 };
+
+async function regenerateImageData(bucketName) {
+  const images = await s3.listObjectsV2({ Bucket: bucketName }).promise();
+
+  const imageData = images.Contents.sort((a, b) =>
+    a.LastModified > b.LastModified ? -1 : 1
+  )
+    .map((x) => x.Key)
+    .filter((x) => !(x.includes("-original") || x.includes("-thumbnail")))
+    .map((x, index) => {
+      return { id: x, order: index };
+    });
+
+  await s3
+    .putObject({
+      Bucket: bucketName,
+      Key: "data.json",
+      Body: JSON.stringify({ data: imageData }),
+      ContentType: "application/json",
+    })
+    .promise();
+}
+
+async function insertImageId(bucketName, imageId) {
+  let data = await s3
+    .getObject({ Bucket: bucketName, Key: "data.json" })
+    .promise();
+
+  let imageData = JSON.parse(data).data;
+
+  imageData.unshift({ id: imageId, order: 0 });
+
+  // Normalize remaining image positions
+  for (var i = 0; i < imageData.length; i++) {
+    imageData[i].order = i;
+  }
+
+  await s3
+    .putObject({
+      Bucket: bucketName,
+      Key: "data.json",
+      Body: JSON.stringify({ data: imageData }),
+      ContentType: "application/json",
+    })
+    .promise();
+}

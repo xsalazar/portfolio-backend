@@ -49,6 +49,12 @@ resource "aws_apigatewayv2_route" "get_instance" {
   target    = "integrations/${aws_apigatewayv2_integration.instance.id}"
 }
 
+resource "aws_apigatewayv2_route" "patch_instance" {
+  api_id    = aws_apigatewayv2_api.instance.id
+  route_key = "PATCH /"
+  target    = "integrations/${aws_apigatewayv2_integration.instance.id}"
+}
+
 resource "aws_apigatewayv2_stage" "instance" {
   api_id      = aws_apigatewayv2_api.instance.id
   name        = "$default"

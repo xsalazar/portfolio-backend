@@ -26,6 +26,9 @@ exports.handler = async (event, context) => {
         })
         .promise();
 
+      // Clean up any removed images from S3
+      deleteUnreferencedImages(bucketName);
+
       // Return updated image data
       return {
         cookies: [],
@@ -204,7 +207,7 @@ exports.handler = async (event, context) => {
 async function insertImageId(bucketName, imageId) {
   const s3 = new AWS.S3();
 
-  let data = await s3
+  const data = await s3
     .getObject({ Bucket: bucketName, Key: "data.json" })
     .promise();
 
@@ -229,4 +232,43 @@ async function insertImageId(bucketName, imageId) {
     .promise();
 
   return ret;
+}
+
+async function deleteUnreferencedImages(bucketName) {
+  const s3 = new AWS.S3();
+
+  const data = await s3
+    .getObject({ Bucket: bucketName, Key: "data.json" })
+    .promise();
+
+  // Image IDs we currently have saved in data.json
+  const imageData = JSON.parse(data.Body.toString()).data.map((x) => x.id);
+
+  // Find all image IDs in S3 _not_ in the data.json file
+  const images = await s3.listObjectsV2({ Bucket: bucketName }).promise();
+  const itemsToDelete = images.Contents.map((x) => x.Key)
+    .filter((x) => !(x.includes("-original") || x.includes("-thumbnail")))
+    .filter((x) => {
+      !imageData.contains(x);
+    });
+
+  for (var i = 0; i < itemsToDelete.length; i++) {
+    // Delete original
+    await s3
+      .deleteObject({ Bucket: bucketName, Key: `${itemsToDelete[i]}-original` })
+      .promise();
+
+    // Delete downscaled
+    await s3
+      .deleteObject({ Bucket: bucketName, Key: `${itemsToDelete[i]}` })
+      .promise();
+
+    // Delete thumbnail
+    await s3
+      .deleteObject({
+        Bucket: bucketName,
+        Key: `${itemsToDelete[i]}-thumbnail`,
+      })
+      .promise();
+  }
 }

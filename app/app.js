@@ -165,7 +165,7 @@ async function insertImageId(bucketName, imageId) {
     .getObject({ Bucket: bucketName, Key: "data.json" })
     .promise();
 
-  let imageData = JSON.parse(data).data;
+  let imageData = JSON.parse(data.Body.toString()).data;
 
   imageData.unshift({ id: imageId, order: 0 });
 

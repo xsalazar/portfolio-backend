@@ -27,7 +27,7 @@ exports.handler = async (event, context) => {
         .promise();
 
       // Clean up any removed images from S3
-      deleteUnreferencedImages(bucketName);
+      await deleteUnreferencedImages(bucketName);
 
       // Return updated image data
       return {
@@ -242,6 +242,7 @@ async function deleteUnreferencedImages(bucketName) {
     .promise();
 
   // Image IDs we currently have saved in data.json
+  console.log(data.Body.toString());
   const imageData = JSON.parse(data.Body.toString()).data.map((x) => x.id);
 
   // Find all image IDs in S3 _not_ in the data.json file

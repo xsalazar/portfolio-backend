@@ -242,15 +242,15 @@ async function deleteUnreferencedImages(bucketName) {
     .promise();
 
   // Image IDs we currently have saved in data.json
-  console.log(data.Body.toString());
   const imageData = JSON.parse(data.Body.toString()).data.map((x) => x.id);
+  console.log(imageData);
 
   // Find all image IDs in S3 _not_ in the data.json file
   const images = await s3.listObjectsV2({ Bucket: bucketName }).promise();
   const itemsToDelete = images.Contents.map((x) => x.Key)
     .filter((x) => !(x.includes("-original") || x.includes("-thumbnail")))
     .filter((x) => {
-      !imageData.contains(x);
+      !imageData.includes(x);
     });
 
   for (var i = 0; i < itemsToDelete.length; i++) {

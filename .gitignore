@@ -1,3 +1,5 @@
+scripts/input/
+scripts/output/
 node_modules/
 .terraform/
 .DS_Store

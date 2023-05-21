@@ -7,7 +7,7 @@ resource "aws_lambda_function" "instance" {
   filename      = "${path.module}/dummy-lambda-package/lambda.zip" // Simple hello world application
   role          = aws_iam_role.instance.arn
   handler       = "app.handler"
-  runtime       = "nodejs16.x"
+  runtime       = "nodejs18.x"
   timeout       = 60  // seconds
   memory_size   = 512 // MB
 

@@ -13,7 +13,7 @@ resource "aws_cloudfront_distribution" "instance" {
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = local.s3_origin_id
     viewer_protocol_policy = "allow-all"
-    cache_policy_id        = "portfolio-cloudfront-cache-policy"
+    cache_policy_id        = aws_cloudfront_cache_policy.instance.id
   }
 
 
@@ -27,5 +27,24 @@ resource "aws_cloudfront_distribution" "instance" {
   viewer_certificate {
     acm_certificate_arn = data.aws_acm_certificate.instance.arn
     ssl_support_method  = "sni-only"
+  }
+}
+
+resource "aws_cloudfront_cache_policy" "instance" {
+  name    = "portfolio-cloudfront-cache-policy"
+  min_ttl = 60
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    cookies_config {
+      cookie_behavior = "none"
+    }
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "none"
+    }
   }
 }

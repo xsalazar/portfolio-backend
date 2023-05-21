@@ -1,3 +1,9 @@
+// We need the specific us-east-1 cert for CloudFront
+data "aws_acm_certificate" "cloudfront_acm_cert" {
+  provider = aws.us-east-1
+  domain   = "backend.xsalazar.com"
+}
+
 resource "aws_cloudfront_distribution" "instance" {
   enabled = true
 
@@ -25,7 +31,7 @@ resource "aws_cloudfront_distribution" "instance" {
   }
 
   viewer_certificate {
-    acm_certificate_arn = data.aws_acm_certificate.instance.arn
+    acm_certificate_arn = data.aws_acm_certificate.cloudfront_acm_cert.arn
     ssl_support_method  = "sni-only"
   }
 }

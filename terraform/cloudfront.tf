@@ -13,7 +13,7 @@ resource "aws_cloudfront_distribution" "instance" {
   }
 
   origin {
-    domain_name = aws_apigatewayv2_api.instance.api_endpoint
+    domain_name = replace(aws_apigatewayv2_api.instance.api_endpoint, "https://", "")
     origin_id   = local.api_gateway_origin_id
 
     custom_origin_config {

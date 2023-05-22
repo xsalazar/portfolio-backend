@@ -12,16 +12,31 @@ resource "aws_cloudfront_distribution" "instance" {
     origin_id   = local.s3_origin_id
   }
 
-  aliases = ["backend.xsalazar.com"]
-
-  default_cache_behavior {
-    allowed_methods        = ["GET", "HEAD"] // lol
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = local.s3_origin_id
-    viewer_protocol_policy = "allow-all"
-    cache_policy_id        = aws_cloudfront_cache_policy.instance.id
+  origin {
+    domain_name = aws_apigatewayv2_api.instance.api_endpoint
+    origin_id   = local.api_gateway_origin_id
   }
 
+  aliases = ["backend.xsalazar.com"]
+
+  // Default to forward to API Gateway
+  default_cache_behavior {
+    allowed_methods        = ["GET", "HEAD"] // lol
+    cache_policy_id        = aws_cloudfront_cache_policy.instance.id
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = local.api_gateway_origin_id
+    viewer_protocol_policy = "allow-all"
+  }
+
+  // Forward `/image` requests to S3
+  ordered_cache_behavior {
+    allowed_methods        = ["GET", "HEAD"]
+    cache_policy_id        = aws_cloudfront_cache_policy.instance.id
+    cached_methods         = ["GET", "HEAD"]
+    path_pattern           = "images/*"
+    target_origin_id       = local.s3_origin_id
+    viewer_protocol_policy = "allow-all"
+  }
 
   restrictions {
     geo_restriction {

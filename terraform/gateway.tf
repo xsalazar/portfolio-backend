@@ -1,3 +1,7 @@
+locals {
+  api_gateway_origin_id = "portfolio-data-api-gateway-origin-id"
+}
+
 resource "aws_apigatewayv2_api" "instance" {
   name                         = "portfolio-api-gateway"
   protocol_type                = "HTTP"

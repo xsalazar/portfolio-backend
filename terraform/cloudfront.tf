@@ -48,7 +48,7 @@ resource "aws_cloudfront_distribution" "instance" {
   // Forward `/` requests to API Gateway
   ordered_cache_behavior {
     allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-    cache_policy_id            = aws_cloudfront_cache_policy.caching-disabled.id
+    cache_policy_id            = aws_cloudfront_cache_policy.instance.id
     cached_methods             = ["GET", "HEAD"]
     path_pattern               = "/*"
     response_headers_policy_id = aws_cloudfront_response_headers_policy.instance.id
@@ -83,28 +83,7 @@ resource "aws_cloudfront_cache_policy" "instance" {
     }
 
     query_strings_config {
-      query_string_behavior = "all"
-    }
-  }
-}
-
-resource "aws_cloudfront_cache_policy" "caching-disabled" {
-  name        = "portfolio-cloudfront-cache-policy"
-  min_ttl     = 0
-  max_ttl     = 0
-  default_ttl = 0
-
-  parameters_in_cache_key_and_forwarded_to_origin {
-    cookies_config {
-      cookie_behavior = "none"
-    }
-
-    headers_config {
-      header_behavior = "none"
-    }
-
-    query_strings_config {
-      query_string_behavior = "all"
+      query_string_behavior = "none"
     }
   }
 }

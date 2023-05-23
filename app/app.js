@@ -133,11 +133,13 @@ exports.handler = async (event, context) => {
 
     try {
       // Check if data exists
-      await s3.headObject({ Bucket: bucketName, Key: "data.json" }).promise();
+      await s3
+        .headObject({ Bucket: bucketName, Key: "images/data.json" })
+        .promise();
 
       // If call above doesn't fail, get data
       const data = await s3
-        .getObject({ Bucket: bucketName, Key: "data.json" })
+        .getObject({ Bucket: bucketName, Key: "images/data.json" })
         .promise();
 
       return {

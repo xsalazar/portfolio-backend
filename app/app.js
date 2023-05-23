@@ -20,7 +20,7 @@ exports.handler = async (event, context) => {
       await s3
         .putObject({
           Bucket: bucketName,
-          Key: "data.json",
+          Key: "images/data.json",
           Body: event.body,
           ContentType: "application/json",
         })
@@ -65,9 +65,9 @@ exports.handler = async (event, context) => {
       await s3
         .putObject({
           Bucket: bucketName,
-          Key: `${imageId}-original`,
+          Key: `images/${imageId}-original`,
           Body: Buffer.from(event.body, "base64"),
-          ContentType: event.headers["content-type"],
+          ContentType: "image/webp",
         })
         .promise();
 
@@ -75,13 +75,13 @@ exports.handler = async (event, context) => {
       await s3
         .putObject({
           Bucket: bucketName,
-          Key: `${imageId}`,
+          Key: `images/${imageId}`,
           Body: await sharp(Buffer.from(event.body, "base64"))
             .resize({
               width: 1600,
             })
             .toBuffer(),
-          ContentType: event.headers["content-type"],
+          ContentType: "image/webp",
         })
         .promise();
 
@@ -89,14 +89,14 @@ exports.handler = async (event, context) => {
       await s3
         .putObject({
           Bucket: bucketName,
-          Key: `${imageId}-thumbnail`,
+          Key: `images/${imageId}-thumbnail`,
           Body: await sharp(Buffer.from(event.body, "base64"))
             .resize({
               width: 256,
               height: 256,
             })
             .toBuffer(),
-          ContentType: event.headers["content-type"],
+          ContentType: "image/webp",
         })
         .promise();
 
@@ -123,50 +123,7 @@ exports.handler = async (event, context) => {
     }
   }
 
-  // Get singular image from S3
-  if (
-    event.queryStringParameters &&
-    event.queryStringParameters.image &&
-    event.requestContext.http.method === "GET"
-  ) {
-    const image = event.queryStringParameters.image;
-    const thumbnail = event.queryStringParameters.thumbnail;
-    const s3 = new AWS.S3();
-
-    // Check S3 for image, return it, if found
-    try {
-      // Check if data exists
-      await s3.headObject({ Bucket: bucketName, Key: image }).promise();
-
-      // If call above doesn't fail, get data
-      const data = await s3
-        .getObject({
-          Bucket: bucketName,
-          Key: `${image}${thumbnail ? "-thumbnail" : ""}`,
-        })
-        .promise();
-
-      return {
-        cookies: [],
-        isBase64Encoded: true,
-        statusCode: 200,
-        headers: { "content-type": data.ContentType },
-        body: data.Body.toString("base64"),
-      };
-    } catch (e) {
-      console.log(JSON.stringify(e, ["name", "message", "stack"]));
-
-      return {
-        cookies: [],
-        isBase64Encoded: false,
-        statusCode: 404,
-        headers: {},
-        body: "",
-      };
-    }
-  }
-
-  // Get all images
+  // Get all images data blob
   if (
     event.queryStringParameters &&
     event.queryStringParameters.allImages &&
@@ -255,19 +212,22 @@ async function deleteUnreferencedImages(bucketName, data) {
   for (var i = 0; i < itemsToDelete.length; i++) {
     // Delete original
     await s3
-      .deleteObject({ Bucket: bucketName, Key: `${itemsToDelete[i]}-original` })
+      .deleteObject({
+        Bucket: bucketName,
+        Key: `images/${itemsToDelete[i]}-original`,
+      })
       .promise();
 
     // Delete downscaled
     await s3
-      .deleteObject({ Bucket: bucketName, Key: `${itemsToDelete[i]}` })
+      .deleteObject({ Bucket: bucketName, Key: `images/${itemsToDelete[i]}` })
       .promise();
 
     // Delete thumbnail
     await s3
       .deleteObject({
         Bucket: bucketName,
-        Key: `${itemsToDelete[i]}-thumbnail`,
+        Key: `images/${itemsToDelete[i]}-thumbnail`,
       })
       .promise();
   }

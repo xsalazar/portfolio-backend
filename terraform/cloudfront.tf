@@ -45,6 +45,16 @@ resource "aws_cloudfront_distribution" "instance" {
     viewer_protocol_policy = "allow-all"
   }
 
+  // Forward `/` requests to API Gateway
+  ordered_cache_behavior {
+    allowed_methods        = ["GET", "HEAD"]
+    cache_policy_id        = aws_cloudfront_cache_policy.instance.id
+    cached_methods         = ["GET", "HEAD"]
+    path_pattern           = "/*"
+    target_origin_id       = local.api_gateway_origin_id
+    viewer_protocol_policy = "allow-all"
+  }
+
   restrictions {
     geo_restriction {
       restriction_type = "none"

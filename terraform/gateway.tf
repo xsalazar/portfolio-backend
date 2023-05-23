@@ -5,29 +5,7 @@ locals {
 resource "aws_apigatewayv2_api" "instance" {
   name                         = "portfolio-api-gateway"
   protocol_type                = "HTTP"
-  disable_execute_api_endpoint = true
-
-  cors_configuration {
-    allow_origins = ["https://portfolio.xsalazar.com"]
-    allow_methods = ["GET", "PATCH", "PUT"]
-    allow_headers = ["*"]
-  }
-}
-
-resource "aws_apigatewayv2_api_mapping" "instance" {
-  api_id      = aws_apigatewayv2_api.instance.id
-  domain_name = aws_apigatewayv2_domain_name.instance.id
-  stage       = "$default"
-}
-
-resource "aws_apigatewayv2_domain_name" "instance" {
-  domain_name = "backend.xsalazar.com"
-
-  domain_name_configuration {
-    certificate_arn = data.aws_acm_certificate.instance.arn
-    endpoint_type   = "REGIONAL"
-    security_policy = "TLS_1_2"
-  }
+  disable_execute_api_endpoint = false
 }
 
 data "aws_acm_certificate" "instance" {

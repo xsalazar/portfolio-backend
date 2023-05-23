@@ -100,7 +100,7 @@ resource "aws_cloudfront_response_headers_policy" "instance" {
     }
 
     access_control_allow_methods {
-      items = ["GET", "PUT", "PATCH"]
+      items = ["GET", "PUT", "PATCH", "OPTIONS"]
     }
 
     access_control_allow_origins {

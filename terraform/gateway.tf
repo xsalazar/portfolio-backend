@@ -6,6 +6,12 @@ resource "aws_apigatewayv2_api" "instance" {
   name                         = "portfolio-api-gateway"
   protocol_type                = "HTTP"
   disable_execute_api_endpoint = false
+
+  cors_configuration {
+    allow_origins = ["https://portfolio.xsalazar.com"]
+    allow_methods = ["GET", "PATCH", "PUT"]
+    allow_headers = ["*"]
+  }
 }
 
 data "aws_acm_certificate" "instance" {

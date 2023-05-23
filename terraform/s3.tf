@@ -8,5 +8,5 @@ resource "aws_s3_bucket" "instance" {
 
 resource "aws_s3_bucket_acl" "instance" {
   bucket = aws_s3_bucket.instance.id
-  acl    = "private"
+  acl    = "public-read"
 }

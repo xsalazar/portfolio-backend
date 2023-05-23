@@ -47,12 +47,13 @@ resource "aws_cloudfront_distribution" "instance" {
 
   // Forward `/` requests to API Gateway
   ordered_cache_behavior {
-    allowed_methods        = ["GET", "HEAD"]
-    cache_policy_id        = aws_cloudfront_cache_policy.instance.id
-    cached_methods         = ["GET", "HEAD"]
-    path_pattern           = "/*"
-    target_origin_id       = local.api_gateway_origin_id
-    viewer_protocol_policy = "allow-all"
+    allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cache_policy_id            = aws_cloudfront_cache_policy.instance.id
+    cached_methods             = ["GET", "HEAD"]
+    path_pattern               = "/*"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.instance.id
+    target_origin_id           = local.api_gateway_origin_id
+    viewer_protocol_policy     = "allow-all"
   }
 
   restrictions {
@@ -84,5 +85,27 @@ resource "aws_cloudfront_cache_policy" "instance" {
     query_strings_config {
       query_string_behavior = "all"
     }
+  }
+}
+
+resource "aws_cloudfront_response_headers_policy" "instance" {
+  name = "portfolio-cloudfront-response-headers-policy"
+
+  cors_config {
+    access_control_allow_credentials = false
+    origin_override                  = true
+
+    access_control_allow_headers {
+      items = ["*"]
+    }
+
+    access_control_allow_methods {
+      items = ["GET", "PUT", "PATCH"]
+    }
+
+    access_control_allow_origins {
+      items = ["portfolio.xsalazar.com"]
+    }
+
   }
 }

@@ -10,7 +10,7 @@ async function convert() {
     console.log(`Processing: ${inputFileName}`);
     await sharp(`./input/${inputFileName}`)
       .webp()
-      .toFile(`./output/${inputFileName}`);
+      .toFile(`./output/${inputFileName.split(".")[0]}.webp`);
   }
 }
 

@@ -167,7 +167,7 @@ async function insertImageId(bucketName, imageId) {
   const s3 = new AWS.S3();
 
   const data = await s3
-    .getObject({ Bucket: bucketName, Key: "data.json" })
+    .getObject({ Bucket: bucketName, Key: "images/data.json" })
     .promise();
 
   let imageData = JSON.parse(data.Body.toString()).data;
@@ -184,7 +184,7 @@ async function insertImageId(bucketName, imageId) {
   await s3
     .putObject({
       Bucket: bucketName,
-      Key: "data.json",
+      Key: "images/data.json",
       Body: JSON.stringify(ret),
       ContentType: "application/json",
     })

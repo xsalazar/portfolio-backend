@@ -48,8 +48,9 @@ resource "aws_cloudfront_distribution" "instance" {
   // Forward `/` requests to API Gateway
   ordered_cache_behavior {
     allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-    cache_policy_id            = aws_cloudfront_cache_policy.instance.id
+    cache_policy_id            = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" // Managed-CachingDisabled
     cached_methods             = ["GET", "HEAD"]
+    origin_request_policy_id   = "b689b0a8-53d0-40ab-baf2-68738e2966ac" // Managed-AllViewerExceptHostHeader
     path_pattern               = "/*"
     response_headers_policy_id = aws_cloudfront_response_headers_policy.instance.id
     target_origin_id           = local.api_gateway_origin_id
@@ -106,6 +107,5 @@ resource "aws_cloudfront_response_headers_policy" "instance" {
     access_control_allow_origins {
       items = ["portfolio.xsalazar.com"]
     }
-
   }
 }

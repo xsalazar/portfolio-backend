@@ -7,10 +7,10 @@ async function convert() {
   var inputFileNames = fs.readdirSync(`./input`);
   for (var i = 0; i < inputFileNames.length; i++) {
     const inputFileName = inputFileNames[i];
+    const outputFileName = `./output/${inputFileName.split(".")[0]}.webp`;
+
     console.log(`Processing: ${inputFileName}`);
-    await sharp(`./input/${inputFileName}`)
-      .webp()
-      .toFile(`./output/${inputFileName.split(".")[0]}.webp`);
+    await sharp(`./input/${inputFileName}`).webp().toFile(outputFileName);
   }
 }
 

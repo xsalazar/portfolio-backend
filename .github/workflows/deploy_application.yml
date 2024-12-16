@@ -48,6 +48,10 @@ jobs:
         run: npm ci
         working-directory: ./app
 
+      - name: Install Lambda specific packages 📀
+        run: npm install --os=linux --cpu=x64 sharp
+        working-directory: ./app
+
       - name: Create Deployment Package 🎁
         run: zip -r lambda.zip .
         working-directory: ./app

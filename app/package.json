@@ -4,7 +4,7 @@
   "main": "index.js",
   "dependencies": {
     "aws-sdk": "^2.1692.0",
-    "sharp": "0.34.1",
+    "sharp": "0.34.2",
     "uuid": "^11.0.3"
   },
   "scripts": {

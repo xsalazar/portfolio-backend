@@ -14,10 +14,6 @@ resource "aws_apigatewayv2_api" "instance" {
   }
 }
 
-data "aws_acm_certificate" "instance" {
-  domain = "backend.xsalazar.com"
-}
-
 resource "aws_apigatewayv2_integration" "instance" {
   api_id                 = aws_apigatewayv2_api.instance.id
   integration_type       = "AWS_PROXY"

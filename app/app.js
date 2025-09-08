@@ -1,8 +1,8 @@
-const { v4: uuidv4 } = require("uuid");
-const sharp = require("sharp");
-const AWS = require("aws-sdk");
+import sharp from "sharp";
+import { v4 as uuidv4 } from "uuid";
+import AWS from "aws-sdk";
 
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
   console.log(JSON.stringify(event));
   const bucketName = "xsalazar-portfolio-data";
 

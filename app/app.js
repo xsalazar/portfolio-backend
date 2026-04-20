@@ -206,48 +206,51 @@ async function insertImageId(bucketName, imageId) {
 }
 
 async function deleteUnreferencedImages(bucketName, data) {
-  const imageData = JSON.parse(data).data.map((x) => x.id);
+  const referencedIds = new Set(JSON.parse(data).data.map((x) => x.id));
 
-  // Find all image IDs in S3 _not_ in the update data
   const images = await s3.send(
     new ListObjectsV2Command({
       Bucket: bucketName,
+      Prefix: "images/",
     }),
   );
 
-  const itemsToDelete = images.Contents.map((x) => x.Key)
-    .filter(
-      (x) =>
-        !(
-          x.includes("-original") ||
-          x.includes("-thumbnail") ||
-          x.includes("data.json")
-        ),
-    )
-    .filter((x) => !imageData.includes(x));
+  // S3 holds three keys per image (`images/<id>`, `images/<id>-original`,
+  // `images/<id>-thumbnail`) plus the `images/data.json` blob. Collapse those
+  // to the bare image IDs actually present in the bucket.
+  const idsInBucket = new Set();
+  for (const { Key } of images.Contents ?? []) {
+    if (!Key || Key === "images/data.json") {
+      continue;
+    }
 
-  for (var i = 0; i < itemsToDelete.length; i++) {
-    // Delete original
+    const id = Key.replace("images/", "")
+      .replace("-original", "")
+      .replace("-thumbnail", "");
+    idsInBucket.add(id);
+  }
+
+  const idsToDelete = [...idsInBucket].filter((id) => !referencedIds.has(id));
+
+  for (const id of idsToDelete) {
     await s3.send(
       new DeleteObjectCommand({
         Bucket: bucketName,
-        Key: `images/${itemsToDelete[i]}-original`,
+        Key: `images/${id}-original`,
       }),
     );
 
-    // Delete downscaled
     await s3.send(
       new DeleteObjectCommand({
         Bucket: bucketName,
-        Key: `images/${itemsToDelete[i]}`,
+        Key: `images/${id}`,
       }),
     );
 
-    // Delete thumbnail
     await s3.send(
       new DeleteObjectCommand({
         Bucket: bucketName,
-        Key: `images/${itemsToDelete[i]}-thumbnail`,
+        Key: `images/${id}-thumbnail`,
       }),
     );
   }

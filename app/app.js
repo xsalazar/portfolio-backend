@@ -1,9 +1,19 @@
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
-import AWS from "aws-sdk";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
+
+const s3 = new S3Client();
 
 export const handler = async (event, context) => {
   console.log(JSON.stringify(event));
+
   const bucketName = "xsalazar-portfolio-data";
 
   // Update image data through API with valid token and query param
@@ -14,17 +24,15 @@ export const handler = async (event, context) => {
     event.queryStringParameters.updateImageData &&
     event.requestContext.http.method === "PATCH"
   ) {
-    const s3 = new AWS.S3();
-
     try {
-      await s3
-        .putObject({
+      await s3.send(
+        new PutObjectCommand({
           Bucket: bucketName,
           Key: "images/data.json",
           Body: event.body,
           ContentType: "application/json",
-        })
-        .promise();
+        }),
+      );
 
       // Clean up any removed images from S3
       await deleteUnreferencedImages(bucketName, event.body);
@@ -57,23 +65,22 @@ export const handler = async (event, context) => {
     event.queryStringParameters.token === process.env.PORTFOLIO_API_KEY &&
     event.requestContext.http.method === "PUT"
   ) {
-    const s3 = new AWS.S3();
     const imageId = uuidv4();
 
     try {
       // Upload image to S3
-      await s3
-        .putObject({
+      await s3.send(
+        new PutObjectCommand({
           Bucket: bucketName,
           Key: `images/${imageId}-original`,
           Body: Buffer.from(event.body, "base64"),
           ContentType: "image/webp",
-        })
-        .promise();
+        }),
+      );
 
       // Upload downscaled image to S3
-      await s3
-        .putObject({
+      await s3.send(
+        new PutObjectCommand({
           Bucket: bucketName,
           Key: `images/${imageId}`,
           Body: await sharp(Buffer.from(event.body, "base64"))
@@ -82,12 +89,12 @@ export const handler = async (event, context) => {
             })
             .toBuffer(),
           ContentType: "image/webp",
-        })
-        .promise();
+        }),
+      );
 
       // Upload thumbnail image to S3
-      await s3
-        .putObject({
+      await s3.send(
+        new PutObjectCommand({
           Bucket: bucketName,
           Key: `images/${imageId}-thumbnail`,
           Body: await sharp(Buffer.from(event.body, "base64"))
@@ -97,8 +104,8 @@ export const handler = async (event, context) => {
             })
             .toBuffer(),
           ContentType: "image/webp",
-        })
-        .promise();
+        }),
+      );
 
       const result = await insertImageId(bucketName, imageId);
 
@@ -129,25 +136,29 @@ export const handler = async (event, context) => {
     event.queryStringParameters.allImages &&
     event.requestContext.http.method === "GET"
   ) {
-    const s3 = new AWS.S3();
-
     try {
       // Check if data exists
-      await s3
-        .headObject({ Bucket: bucketName, Key: "images/data.json" })
-        .promise();
+      await s3.send(
+        new HeadObjectCommand({
+          Bucket: bucketName,
+          Key: "images/data.json",
+        }),
+      );
 
       // If call above doesn't fail, get data
-      const data = await s3
-        .getObject({ Bucket: bucketName, Key: "images/data.json" })
-        .promise();
+      const data = await s3.send(
+        new GetObjectCommand({
+          Bucket: bucketName,
+          Key: "images/data.json",
+        }),
+      );
 
       return {
         cookies: [],
         isBase64Encoded: false,
         statusCode: 200,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(JSON.parse(data.Body.toString())),
+        body: await data.Body.transformToString(),
       };
     } catch (e) {
       console.log(JSON.stringify(e, ["name", "message", "stack"]));
@@ -164,13 +175,14 @@ export const handler = async (event, context) => {
 };
 
 async function insertImageId(bucketName, imageId) {
-  const s3 = new AWS.S3();
+  const data = await s3.send(
+    new GetObjectCommand({
+      Bucket: bucketName,
+      Key: "images/data.json",
+    }),
+  );
 
-  const data = await s3
-    .getObject({ Bucket: bucketName, Key: "images/data.json" })
-    .promise();
-
-  let imageData = JSON.parse(data.Body.toString()).data;
+  let imageData = JSON.parse(await data.Body.transformToString()).data;
 
   imageData.unshift({ id: imageId, order: 0 });
 
@@ -181,25 +193,28 @@ async function insertImageId(bucketName, imageId) {
 
   const ret = { data: imageData };
 
-  await s3
-    .putObject({
+  await s3.send(
+    new PutObjectCommand({
       Bucket: bucketName,
       Key: "images/data.json",
       Body: JSON.stringify(ret),
       ContentType: "application/json",
-    })
-    .promise();
+    }),
+  );
 
   return ret;
 }
 
 async function deleteUnreferencedImages(bucketName, data) {
-  const s3 = new AWS.S3();
-
   const imageData = JSON.parse(data).data.map((x) => x.id);
 
   // Find all image IDs in S3 _not_ in the update data
-  const images = await s3.listObjectsV2({ Bucket: bucketName }).promise();
+  const images = await s3.send(
+    new ListObjectsV2Command({
+      Bucket: bucketName,
+    }),
+  );
+
   const itemsToDelete = images.Contents.map((x) => x.Key)
     .filter(
       (x) =>
@@ -207,30 +222,33 @@ async function deleteUnreferencedImages(bucketName, data) {
           x.includes("-original") ||
           x.includes("-thumbnail") ||
           x.includes("data.json")
-        )
+        ),
     )
     .filter((x) => !imageData.includes(x));
 
   for (var i = 0; i < itemsToDelete.length; i++) {
     // Delete original
-    await s3
-      .deleteObject({
+    await s3.send(
+      new DeleteObjectCommand({
         Bucket: bucketName,
         Key: `images/${itemsToDelete[i]}-original`,
-      })
-      .promise();
+      }),
+    );
 
     // Delete downscaled
-    await s3
-      .deleteObject({ Bucket: bucketName, Key: `images/${itemsToDelete[i]}` })
-      .promise();
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: bucketName,
+        Key: `images/${itemsToDelete[i]}`,
+      }),
+    );
 
     // Delete thumbnail
-    await s3
-      .deleteObject({
+    await s3.send(
+      new DeleteObjectCommand({
         Bucket: bucketName,
         Key: `images/${itemsToDelete[i]}-thumbnail`,
-      })
-      .promise();
+      }),
+    );
   }
 }
